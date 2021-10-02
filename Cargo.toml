@@ -5,7 +5,7 @@ authors = [
     "Chris Ohk <utilforever@gmail.com>",
     "Yunseo Jeong <jys5440@gmail.com>"
 ]
-edition = "2021"
+edition = "2018"
 description = "Creative Coding Framework based on Entity Component System (ECS) written in Rust"
 
 readme = "README.md"
