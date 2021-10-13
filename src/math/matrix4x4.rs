@@ -1,3 +1,1 @@
-pub struct Matrix4x4 {
-
-}
+pub struct Matrix4x4 {}

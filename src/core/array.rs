@@ -1,3 +1,1 @@
-pub struct Array {
-
-}
+pub struct Array {}

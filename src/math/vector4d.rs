@@ -1,3 +1,1 @@
-pub struct Vector4D {
-
-}
+pub struct Vector4D {}

@@ -1,3 +1,1 @@
-pub struct HashTable {
-
-}
+pub struct HashTable {}

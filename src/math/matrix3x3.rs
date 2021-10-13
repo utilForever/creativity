@@ -1,3 +1,1 @@
-pub struct Matrix3x3 {
-
-}
+pub struct Matrix3x3 {}

@@ -1,3 +1,1 @@
-pub struct String {
-
-}
+pub struct String {}
