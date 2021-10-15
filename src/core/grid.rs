@@ -2,6 +2,8 @@ use rand::prelude::{thread_rng, SliceRandom};
 
 use std::cmp::{Eq, PartialEq};
 
+use std::mem::swap;
+
 use std::iter::StepBy;
 use std::slice::Iter;
 
@@ -12,7 +14,7 @@ pub struct Grid<T> {
 }
 
 impl<T: Clone> Grid<T> {
-    pub fn new(rows: usize, cols:usize) -> Grid<T>
+    pub fn new(rows: usize, cols: usize) -> Grid<T>
     where
         T: Default,
     {
@@ -30,8 +32,8 @@ impl<T: Clone> Grid<T> {
             data: vec![data; rows * cols],
         }
     }
-    
-    pub fn from_vec(rows: usize, cols: usize, mut vec:  Vec<T>) -> Grid<T> 
+
+    pub fn from_vec(rows: usize, cols: usize, mut vec: Vec<T>) -> Grid<T>
     where
         T: Default,
     {
@@ -51,11 +53,11 @@ impl<T: Clone> Grid<T> {
         if self.rows != insert_vec.len() {
             panic!("rows != insert vector length");
         }
-        
+
         if index > self.cols {
             panic!("out of bound");
         }
-        
+
         for i in 0..self.rows {
             let data_idx = i * self.cols + index + i;
             self.data.insert(data_idx, insert_vec[i].clone());
@@ -74,7 +76,7 @@ impl<T: Clone> Grid<T> {
         }
 
         let start_idx = index * self.cols;
-        
+
         for i in 0..self.cols {
             self.data.insert(start_idx + i, insert_vec[i].clone());
         }
@@ -99,9 +101,9 @@ impl<T: Clone> Grid<T> {
         if self.data.is_empty() {
             panic!("data is empty");
         }
-        
+
         let remove_idx = index * self.cols;
-        
+
         for _ in 0..self.cols {
             self.data.remove(remove_idx);
         }
@@ -150,7 +152,7 @@ impl<T: Clone> Grid<T> {
 
         self.cols -= 1;
     }
-    
+
     pub fn pop_row(&mut self) {
         if self.data.is_empty() {
             panic!("data is empty");
@@ -162,7 +164,7 @@ impl<T: Clone> Grid<T> {
 
         self.rows -= 1;
     }
-    
+
     pub fn iter_col(&self, col: usize) -> StepBy<Iter<T>> {
         self.data[col..].iter().step_by(self.cols)
     }
@@ -175,9 +177,9 @@ impl<T: Clone> Grid<T> {
     pub fn reverse(&mut self) {
         self.data.reverse();
     }
-    
-    pub fn replace(&mut self, old_data: T, new_data: T) 
-    where 
+
+    pub fn replace(&mut self, old_data: T, new_data: T)
+    where
         T: PartialEq,
     {
         let index = self.rows * self.cols;
@@ -190,7 +192,7 @@ impl<T: Clone> Grid<T> {
         }
     }
 
-    pub fn replace_all(&mut self, old_data: T, new_data: T) 
+    pub fn replace_all(&mut self, old_data: T, new_data: T)
     where
         T: PartialEq,
     {
@@ -204,15 +206,31 @@ impl<T: Clone> Grid<T> {
     }
 
     pub fn shuffle(&mut self) {
-        self.data.shuffle(&mut thread_rng()); 
+        self.data.shuffle(&mut thread_rng());
     }
 
-    pub fn rotate_left(&mut self, shift: usize) {
-        // TO-DO
+    pub fn transpose(&mut self) {
+        let mut vec = Vec::with_capacity(self.data.len());
+
+        for i in 0..self.cols {
+            for j in 0..self.rows {
+                vec.push(self.data[j * self.rows + i].clone());
+            }
+        }
+
+        self.data = vec.clone();
+        swap(&mut self.rows, &mut self.cols);
     }
 
-    pub fn rotate_right(&mut self, shift: usize) {
-        // TO-DO
+    pub fn filter<F>(&self, condition: F) -> Vec<T>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        self.data
+            .clone()
+            .into_iter()
+            .filter(condition)
+            .collect::<Vec<_>>()
     }
 
     pub fn get_rows(&self) -> usize {
@@ -242,7 +260,7 @@ impl<T: Clone> Grid<T> {
         self.cols = 0;
         self.data.clear();
     }
-}   
+}
 
 impl<T: Clone> Clone for Grid<T> {
     fn clone(&self) -> Self {
