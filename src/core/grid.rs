@@ -38,6 +38,10 @@ impl<T: Clone> Grid<T> {
     where
         T: Default,
     {
+        if rows * cols < vec.len() {
+            panic!("Vector length is longer than rows * cols");
+        }
+
         if rows * cols > vec.len() {
             let diff = rows * cols - vec.len();
             vec.append(&mut vec![T::default(); diff]);
@@ -347,7 +351,7 @@ impl<T: Clone> IndexMut<usize> for Grid<T> {
     }
 }
 
-mod grid_tests {
+mod test {
     #[allow(unused_imports)]
     use super::*;
 
@@ -374,6 +378,29 @@ mod grid_tests {
         assert_eq!(grid[0], [1, 2, 3]);
         assert_eq!(grid[1], [4, 5, 6]);
     }
+
+    #[test]
+    #[should_panic]
+    fn from_vec_less_than_vector_length() {
+        Grid::from_vec(2, 2, vec![1, 2, 3, 4, 5, 6]);
+    }
+
+    #[test]
+    fn from_vec_greater_than_vector_length() {
+        let grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 2, 3, 4, 5, 6]);
+
+        assert_eq!(grid[0], [1, 2, 3]);
+        assert_eq!(grid[1], [4, 5, 6]);
+        assert_eq!(grid[2], [0, 0, 0]);
+    }
+
+    #[test]
+    fn from_vec_zero() {
+        let grid: Grid<u32> = Grid::from_vec(0, 0, vec![]);
+
+        assert_eq!(grid.is_empty(), true);
+    }
+        
 
     #[test]
     fn insert_row() {
