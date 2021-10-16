@@ -269,7 +269,7 @@ impl<T: Clone> Grid<T> {
 
         for i in 0..self.cols {
             for j in 0..self.rows {
-                vec.push(self.data[j * self.rows + i].clone());
+                vec.push(self.data[j * self.cols + i].clone());
             }
         }
 
@@ -305,12 +305,6 @@ impl<T: Clone> Grid<T> {
     }
 
     pub fn clear(&mut self) {
-        /*
-         * grid.clear()
-         *
-         * Clear grid
-         */
-
         self.rows = 0;
         self.cols = 0;
         self.data.clear();
@@ -354,6 +348,7 @@ impl<T: Clone> IndexMut<usize> for Grid<T> {
 }
 
 mod grid_tests {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]
@@ -617,5 +612,198 @@ mod grid_tests {
     fn reverse_col_out_of_bound() {
         let mut grid: Grid<u32> = Grid::from_vec(2, 3, vec![1, 2, 3, 4, 5, 6]);
         grid.reverse_col(3);
+    }
+
+    #[test]
+    fn replace() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        grid.replace(1, 2);
+
+        assert_eq!(grid[0], [2, 1, 1]);
+        assert_eq!(grid[1], [1, 1, 1]);
+        assert_eq!(grid[2], [1, 1, 1]);
+    }
+
+    #[test]
+    fn replace_not_change() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        grid.replace(2, 3);
+
+        assert_eq!(grid[0], [1, 1, 1]);
+        assert_eq!(grid[1], [1, 1, 1]);
+        assert_eq!(grid[2], [1, 1, 1]);
+    }
+
+    #[test]
+    fn replace_all() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        grid.replace_all(1, 2);
+
+        assert_eq!(grid[0], [2, 2, 2]);
+        assert_eq!(grid[1], [2, 2, 2]);
+        assert_eq!(grid[2], [2, 2, 2]);
+    }
+
+    #[test]
+    fn replace_all_not_change() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        grid.replace_all(2, 3);
+
+        assert_eq!(grid[0], [1, 1, 1]);
+        assert_eq!(grid[1], [1, 1, 1]);
+        assert_eq!(grid[2], [1, 1, 1]);
+    }
+
+    #[test]
+    fn shuffle() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        grid.shuffle();
+
+        assert_ne!(grid[0], [1, 2, 3]);
+        assert_ne!(grid[1], [4, 5, 6]);
+        assert_ne!(grid[2], [7, 8, 9]);
+    }
+
+    #[test]
+    fn transpose_1() {
+        let mut grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        grid.transpose();
+
+        assert_eq!(grid[0], [1, 4, 7]);
+        assert_eq!(grid[1], [2, 5, 8]);
+        assert_eq!(grid[2], [3, 6, 9]);
+    }
+
+    #[test]
+    fn transpose_2() {
+        let mut grid: Grid<u32> = Grid::from_vec(2, 3, vec![1, 2, 3, 4, 5, 6]);
+        grid.transpose();
+
+        assert_eq!(grid[0], [1, 4]);
+        assert_eq!(grid[1], [2, 5]);
+        assert_eq!(grid[2], [3, 6]);
+    }
+
+    #[test]
+    fn filter() {
+        let grid: Grid<u32> = Grid::from_vec(3, 3, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let even: Vec<u32> = grid.filter(|x| x % 2 == 0);
+        let odd: Vec<u32> = grid.filter(|x| x % 2 == 1);
+
+        assert_eq!(even, vec![2, 4, 6, 8]);
+        assert_eq!(odd, vec![1, 3, 5, 7, 9]);
+    }
+
+    #[test]
+    fn get_rows() {
+        let grid: Grid<u32> = Grid::new(2, 3);
+        let row = grid.get_rows();
+
+        assert_eq!(row, 2);
+    }
+
+    #[test]
+    fn get_cols() {
+        let grid: Grid<u32> = Grid::new(2, 3);
+        let col = grid.get_cols();
+
+        assert_eq!(col, 3);
+    }
+
+    #[test]
+    fn get_size() {
+        let grid: Grid<u32> = Grid::new(2, 3);
+        let size = grid.get_size();
+
+        assert_eq!(size.0, 2);
+        assert_eq!(size.1, 3);
+    }
+
+    #[test]
+    fn is_empty_true() {
+        let grid: Grid<u32> = Grid::new(0, 0);
+        let empty = grid.is_empty();
+
+        assert_eq!(empty, true);
+    }
+
+    #[test]
+    fn is_empty_false() {
+        let grid: Grid<u32> = Grid::new(1, 1);
+        let empty = grid.is_empty();
+
+        assert_eq!(empty, false);
+    }
+
+    #[test]
+    fn clear() {
+        let mut grid: Grid<u32> = Grid::init(3, 3, 1);
+        grid.clear();
+
+        let empty = grid.is_empty();
+
+        assert_eq!(empty, true);
+    }
+
+    #[test]
+    fn eq() {
+        let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+        let grid2: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+
+        assert_eq!(grid1 == grid2, true);
+    }
+
+    #[test]
+    fn eq_empty() {
+        let grid1: Grid<u32> = Grid::new(0, 0);
+        let grid2: Grid<u32> = Grid::new(0, 0);
+
+        assert_eq!(grid1 == grid2, true);
+    }
+
+    #[test]
+    fn ne() {
+        let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+        let grid2: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 5]);
+
+        assert_eq!(grid1 != grid2, true);
+    }
+
+    #[test]
+    fn ne_row_and_col() {
+        let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+        let grid2: Grid<u32> = Grid::from_vec(1, 4, vec![1, 2, 3, 4]);
+
+        assert_eq!(grid1 != grid2, true);
+    }
+
+    #[test]
+    fn ne_full_and_empty() {
+        let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+        let grid2: Grid<u32> = Grid::new(0, 0);
+
+        assert_eq!(grid1 != grid2, true);
+    }
+
+    #[test]
+    fn index() {
+        let grid: Grid<u32> = Grid::init(3, 3, 1);
+
+        assert_eq!(grid[0][0], 1);
+    }
+
+    #[test]
+    #[should_panic]
+    fn index_out_of_bound() {
+        let grid: Grid<u32> = Grid::init(3, 3, 1);
+        grid[20][0];
+    }
+
+    #[test]
+    fn index_set() {
+        let mut grid: Grid<u32> = Grid::init(3, 3, 1);
+        grid[0][0] = 2;
+
+        assert_eq!(grid[0][0], 2);
     }
 }
