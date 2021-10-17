@@ -1,12 +1,92 @@
+/*!
+# Grid
+A contiguous growable two-Dimensional data structure.
+Grid stores data in one-dimensional vector and behaves like two-dimensional vector.
+
+# Examples
+
+```
+use creativity::*;
+
+let grid = grid![[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]];
+```
+*/
+
 use rand::prelude::{thread_rng, SliceRandom};
 
 use std::cmp::{Eq, PartialEq};
-use std::ops::{Index, IndexMut};
-
-use std::mem::swap;
-
+use std::fmt::{Debug, Formatter, Result};
 use std::iter::StepBy;
+use std::mem::swap;
+use std::ops::{Index, IndexMut};
 use std::slice::Iter;
+
+/// Macro for initializing a grid with values.
+///
+/// Similar to declaring a two-dimensional array in C/C++.
+/// All rows must be the same length.
+/// If all rows are not of the same length, panic occurs.
+///
+/// # Examples
+/// Example code that execute normally.
+/// ```
+/// use creativity::*;
+///
+/// let grid_u32: core::grid::Grid<u8> = grid![];
+/// let grid_char = grid![['a', 'b']];
+/// let grid_f32 = grid![[1.0, 2.0], [3.0, 4.0]];
+/// ```
+///
+/// Example code that panic occurs.
+/// ```ignore
+/// use creativity::*;
+///
+/// let grid_error = grid![[1, 2, 3],
+///                        [4, 5], // panic!
+///                        [7, 8, 9]];
+/// ```
+
+#[macro_export]
+macro_rules! grid {
+    () => {
+        $crate::core::grid::Grid::from_vec(0, 0, vec![]);
+    };
+
+    ( [$( $x:expr ),* ] ) => {
+        {
+            let vec = vec![$($x),*];
+            let col = vec.len();
+
+            $crate::core::grid::Grid::from_vec(1, col, vec)
+        }
+    };
+
+    ( [$( $x0:expr ),*] $( $(,)+ [$( $x1:expr ),*] )* ) => {
+        {
+            let mut vec = Vec::new();
+
+            $( vec.push($x0); )*
+
+            let mut length: usize = vec.len();
+            let cols: usize = length;
+
+            $(
+                $( vec.push($x1); )*
+                length = vec.len();
+
+                if length % cols != 0 {
+                    panic!("All rows must be the same length");
+                }
+            )*
+
+            let rows: usize = length / cols;
+
+            $crate::core::grid::Grid::from_vec(rows, cols, vec)
+        }
+    };
+}
 
 pub struct Grid<T> {
     rows: usize,
@@ -331,6 +411,28 @@ impl<T: Eq> PartialEq for Grid<T> {
     }
 }
 
+impl<T: Eq> Eq for Grid<T> {}
+
+impl<T: Debug> Debug for Grid<T> {
+    #[allow(unused_must_use)]
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "[");
+
+        if self.cols > 0 && self.rows > 0 {
+            for i in 0..self.rows {
+                let start_idx = i * self.cols;
+
+                write!(f, "{:?}", &self.data[start_idx..start_idx + self.cols]);
+
+                if self.rows - i > 1 {
+                    write!(f, ", ");
+                }
+            }
+        }
+        write!(f, "]")
+    }
+}
+
 impl<T: Clone> Index<usize> for Grid<T> {
     type Output = [T];
 
@@ -400,7 +502,6 @@ mod test {
 
         assert_eq!(grid.is_empty(), true);
     }
-        
 
     #[test]
     fn insert_row() {
@@ -793,15 +894,15 @@ mod test {
         let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
         let grid2: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 5]);
 
-        assert_eq!(grid1 != grid2, true);
+        assert_ne!(grid1, grid2);
     }
 
     #[test]
-    fn ne_row_and_col() {
+    fn ne_diff_row_and_col() {
         let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
         let grid2: Grid<u32> = Grid::from_vec(1, 4, vec![1, 2, 3, 4]);
 
-        assert_eq!(grid1 != grid2, true);
+        assert_ne!(grid1, grid2);
     }
 
     #[test]
@@ -809,7 +910,7 @@ mod test {
         let grid1: Grid<u32> = Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
         let grid2: Grid<u32> = Grid::new(0, 0);
 
-        assert_eq!(grid1 != grid2, true);
+        assert_ne!(grid1, grid2);
     }
 
     #[test]
@@ -832,5 +933,42 @@ mod test {
         grid[0][0] = 2;
 
         assert_eq!(grid[0][0], 2);
+    }
+
+    #[test]
+    fn macro_1() {
+        let grid: Grid<u32> = grid![];
+
+        assert_eq!(grid.is_empty(), true);
+    }
+
+    #[test]
+    fn macro_2() {
+        let grid: Grid<u32> = grid![[1, 2, 3, 4]];
+        let rows = grid.get_rows();
+        let cols = grid.get_cols();
+
+        assert_eq!(rows, 1);
+        assert_eq!(cols, 4);
+        assert_eq!(grid[0], [1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn macro_3() {
+        let grid: Grid<u32> = grid![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+        let rows = grid.get_rows();
+        let cols = grid.get_cols();
+
+        assert_eq!(rows, 3);
+        assert_eq!(cols, 3);
+        assert_eq!(grid[0], [1, 2, 3]);
+        assert_eq!(grid[1], [4, 5, 6]);
+        assert_eq!(grid[2], [7, 8, 9]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn macro_diff_col_size() {
+        grid![[1, 2, 3], [4, 5], [7, 8, 9]];
     }
 }
