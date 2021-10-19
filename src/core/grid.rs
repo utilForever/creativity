@@ -29,12 +29,12 @@ use std::slice::Iter;
 /// All rows must be the same length.
 /// If all rows are not of the same length, panic occurs.
 ///
-/// # Examples
+/// Example:
 /// Example code that execute normally.
 /// ```
 /// use creativity::*;
 ///
-/// let grid_u32: core::grid::Grid<u8> = grid![];
+/// let grid_u32: core::grid::Grid<u32> = grid![];
 /// let grid_char = grid![['a', 'b']];
 /// let grid_f32 = grid![[1.0, 2.0], [3.0, 4.0]];
 /// ```
@@ -88,6 +88,13 @@ macro_rules! grid {
     };
 }
 
+/// Elements of grid structure.
+///
+/// rows: The row size of the grid.
+/// cols: The column size of the grid.
+/// data: Store grid structure data in one-dimensional vector.
+///
+/// Store grid structure data using one-dimensional vector.
 pub struct Grid<T> {
     rows: usize,
     cols: usize,
@@ -95,6 +102,15 @@ pub struct Grid<T> {
 }
 
 impl<T: Clone> Grid<T> {
+    /// Initialize grid with default value.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = core::grid::Grid::new(2, 2);
+    /// assert_eq!(grid, grid![[0, 0], [0, 0]]);
+    /// ```
     pub fn new(rows: usize, cols: usize) -> Grid<T>
     where
         T: Default,
@@ -106,6 +122,16 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Initialize grid with parameter value.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = core::grid::Grid::init(2, 2, 1);
+    ///
+    /// assert_eq!(grid, grid![[1, 1], [1, 1]]);
+    /// ```
     pub fn init(rows: usize, cols: usize, data: T) -> Grid<T> {
         Grid {
             rows,
@@ -114,19 +140,33 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Initialize grid with parameter vector.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = core::grid::Grid::from_vec(2, 2, vec![1, 2, 3, 4]);
+    ///
+    /// assert_eq!(grid, grid![[1, 2], [3, 4]]);
+    /// ```
     pub fn from_vec(rows: usize, cols: usize, mut vec: Vec<T>) -> Grid<T>
     where
         T: Default,
     {
+        // check grid size and vector size.
+        // if vector size is greater than grid size, panic occurs.
         if rows * cols < vec.len() {
             panic!("Vector length is longer than rows * cols");
         }
 
+        // if vector size is less than grid size, fill in the diff with default value.
         if rows * cols > vec.len() {
             let diff = rows * cols - vec.len();
             vec.append(&mut vec![T::default(); diff]);
         }
 
+        // return Grid
         Grid {
             rows,
             cols,
@@ -134,41 +174,94 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Insert new values in a specific row.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2]];
+    ///
+    /// grid.insert_row(0, vec![3, 4]);
+    ///
+    /// assert_eq!(grid, grid![[3, 4], [1, 2]]);
+    /// ```
     pub fn insert_row(&mut self, index: usize, insert_vec: Vec<T>) {
+        // check agument vector size and column size.
+        // if column size is not equal argument vector size, panic occurs.
+        // to insert, column size and vector size must be same.
         if self.cols != insert_vec.len() {
             panic!("cols != insert vector length");
         }
 
+        // check the row to insert(index) and grid row size.
+        // if row size is less than index, panic occurs.
+        // to insert, index is not greater than grid row size.
         if index > self.rows {
             panic!("out of bound");
         }
 
+        // calculate real start index to insert.
         let start_idx = index * self.cols;
 
+        // insert.
         for i in 0..self.cols {
             self.data.insert(start_idx + i, insert_vec[i].clone());
         }
 
+        // increasing grid row size.
         self.rows += 1;
     }
 
+    /// Insert new values in a specific column.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1], [2]];
+    ///
+    /// grid.insert_col(1, vec![3, 4]);
+    ///
+    /// assert_eq!(grid, grid![[1, 3], [2, 4]]);
+    /// ```
     pub fn insert_col(&mut self, index: usize, insert_vec: Vec<T>) {
+        // check agument vector size and row size.
+        // if row size is not equal argument vector size, panic occurs.
+        // to insert, row size and vector size must be same.
         if self.rows != insert_vec.len() {
             panic!("rows != insert vector length");
         }
 
+        // check the column to insert(index) and grid column size.
+        // if column size is less than index, panic occurs.
+        // to insert, index is not greater than grid column size.
         if index > self.cols {
             panic!("out of bound");
         }
 
         for i in 0..self.rows {
+            // calculate real index in insert.
             let data_idx = i * self.cols + index + i;
             self.data.insert(data_idx, insert_vec[i].clone());
         }
 
+        // increasing grid column size
         self.cols += 1;
     }
 
+    /// Remove values in specific row.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4], [5, 6]];
+    ///
+    /// grid.remove_row(1);
+    ///
+    /// assert_eq!(grid, grid![[1, 2], [5, 6]]);
+    /// ```
     pub fn remove_row(&mut self, index: usize) {
         if self.data.is_empty() {
             panic!("data is empty");
@@ -187,6 +280,18 @@ impl<T: Clone> Grid<T> {
         self.rows -= 1;
     }
 
+    /// Remove values in specific column.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// grid.remove_col(1);
+    ///
+    /// assert_eq!(grid, grid![[1, 3], [4, 6]]);
+    /// ```
     pub fn remove_col(&mut self, index: usize) {
         if self.data.is_empty() {
             panic!("data is empty");
@@ -204,6 +309,18 @@ impl<T: Clone> Grid<T> {
         self.cols -= 1;
     }
 
+    /// Insert new values in the last row.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2]];
+    ///
+    /// grid.push_row(vec![3, 4]);
+    ///
+    /// assert_eq!(grid, grid![[1, 2], [3, 4]]);
+    /// ```
     pub fn push_row(&mut self, push_vec: Vec<T>) {
         if self.cols != push_vec.len() {
             panic!("cols != push vector length");
@@ -216,6 +333,18 @@ impl<T: Clone> Grid<T> {
         self.rows += 1;
     }
 
+    /// Insert new values in the last column.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1], [2]];
+    ///
+    /// grid.push_col(vec![3, 4]);
+    ///
+    /// assert_eq!(grid, grid![[1, 3], [2, 4]]);
+    /// ```
     pub fn push_col(&mut self, push_vec: Vec<T>) {
         if self.rows != push_vec.len() {
             panic!("rows != push vector length");
@@ -231,6 +360,18 @@ impl<T: Clone> Grid<T> {
         self.cols += 1;
     }
 
+    /// Remove values in the last row.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    ///
+    /// grid.pop_row();
+    ///
+    /// assert_eq!(grid, grid![[1, 2]]);
+    /// ```
     pub fn pop_row(&mut self) {
         if self.data.is_empty() {
             panic!("data is empty");
@@ -243,6 +384,18 @@ impl<T: Clone> Grid<T> {
         self.rows -= 1;
     }
 
+    /// Remove values in the last column.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    ///
+    /// grid.pop_col();
+    ///
+    /// assert_eq!(grid, grid![[1, 2], [4, 5]]);
+    /// ```
     pub fn pop_col(&mut self) {
         if self.data.is_empty() {
             panic!("data is empty");
@@ -258,10 +411,38 @@ impl<T: Clone> Grid<T> {
         self.cols -= 1;
     }
 
+    /// Return iterator over the grid.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    /// let mut iter = grid.iter();
+    ///
+    /// assert_eq!(iter.next(), Some(&1));
+    /// assert_eq!(iter.next(), Some(&2));
+    /// assert_eq!(iter.next(), Some(&3));
+    /// assert_eq!(iter.next(), Some(&4));
+    /// assert_eq!(iter.next(), None);
+    /// ```
     pub fn iter(&self) -> Iter<T> {
         self.data.iter()
     }
 
+    /// Return iterator over the grid data in specific row.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    /// let mut iter = grid.iter_row(1);
+    ///
+    /// assert_eq!(iter.next(), Some(&3));
+    /// assert_eq!(iter.next(), Some(&4));
+    /// assert_eq!(iter.next(), None);
+    /// ```
     pub fn iter_row(&self, row: usize) -> Iter<T> {
         if row > self.rows {
             panic!("out of bound");
@@ -271,6 +452,19 @@ impl<T: Clone> Grid<T> {
         self.data[start..(start + self.cols)].iter()
     }
 
+    /// Return iterator over the grid data in specific column.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    /// let mut iter = grid.iter_col(1);
+    ///
+    /// assert_eq!(iter.next(), Some(&2));
+    /// assert_eq!(iter.next(), Some(&4));
+    /// assert_eq!(iter.next(), None);
+    /// ```
     pub fn iter_col(&self, col: usize) -> StepBy<Iter<T>> {
         if col > self.cols {
             panic!("out of bound");
@@ -279,6 +473,18 @@ impl<T: Clone> Grid<T> {
         self.data[col..].iter().step_by(self.cols)
     }
 
+    /// Reverse the grid data.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    ///
+    /// grid.reverse();
+    ///
+    /// assert_eq!(grid, grid![[4, 3], [2, 1]]);
+    /// ```
     pub fn reverse(&mut self) {
         self.data.reverse();
     }
@@ -317,6 +523,18 @@ impl<T: Clone> Grid<T> {
         self.insert_col(col, reverse_col);
     }
 
+    /// Replace a specific value in the grid with a new value.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [1, 2]];
+    ///
+    /// grid.replace(1, 3);
+    ///
+    /// assert_eq!(grid, grid![[3, 2], [1, 2]]);
+    /// ```
     pub fn replace(&mut self, old_data: T, new_data: T)
     where
         T: PartialEq,
@@ -331,6 +549,18 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Replace all specific values in the grid with a new value.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 1], [1, 1]];
+    ///
+    /// grid.replace_all(1, 2);
+    ///
+    /// assert_eq!(grid, grid![[2, 2], [2, 2]]);
+    /// ```
     pub fn replace_all(&mut self, old_data: T, new_data: T)
     where
         T: PartialEq,
@@ -344,10 +574,35 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Randomly shuffle the grid data.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    ///
+    /// grid.shuffle();
+    ///
+    /// // not equal !
+    /// assert_ne!(grid, grid![[1, 2], [3, 4]]);
+    /// ```
     pub fn shuffle(&mut self) {
         self.data.shuffle(&mut thread_rng());
     }
 
+    /// Transpose the grid.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+    ///
+    /// grid.transpose();
+    ///
+    /// assert_eq!(grid, grid![[1, 4, 7], [2, 5, 8], [3, 6, 9]]);
+    /// ```
     pub fn transpose(&mut self) {
         let mut vec = Vec::with_capacity(self.data.len());
 
@@ -361,6 +616,17 @@ impl<T: Clone> Grid<T> {
         swap(&mut self.rows, &mut self.cols);
     }
 
+    /// Return the values that match the condition as a vector.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    /// let odd = grid.filter(|x| x % 2 == 1);
+    ///
+    /// assert_eq!(odd, vec![1, 3, 5]);
+    /// ```
     pub fn filter<F>(&self, condition: F) -> Vec<T>
     where
         F: FnMut(&T) -> bool,
@@ -372,22 +638,80 @@ impl<T: Clone> Grid<T> {
             .collect::<Vec<_>>()
     }
 
+    /// Return the grid row size.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    /// let rows = grid.get_rows();
+    ///
+    /// assert_eq!(rows, 2);
+    /// ```
     pub fn get_rows(&self) -> usize {
         self.rows
     }
 
+    /// Return the grid column size.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    /// let cols = grid.get_cols();
+    ///
+    /// assert_eq!(cols, 3);
+    /// ```
     pub fn get_cols(&self) -> usize {
         self.cols
     }
 
+    /// Return the grid total size as a tuple.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid: core::grid::Grid<u32> = grid![[1, 2, 3], [4, 5, 6]];
+    /// let size = grid.get_size();
+    ///
+    /// assert_eq!(size.0, 2);  // rows
+    /// assert_eq!(size.1, 3);  // cols
+    /// ```
     pub fn get_size(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
+    /// Check the grid is empty.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let grid1: core::grid::Grid<u32> = grid![];
+    /// let grid2: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    ///
+    /// assert_eq!(grid1.is_empty(), true);
+    /// assert_eq!(grid2.is_empty(), false);
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.cols == 0 && self.rows == 0 && self.data.is_empty()
     }
 
+    /// Clear the grid.
+    ///
+    /// Example:
+    /// ```
+    /// use creativity::*;
+    ///
+    /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
+    ///
+    /// grid.clear();
+    ///
+    /// assert_eq!(grid.is_empty(), true);
+    /// ```
     pub fn clear(&mut self) {
         self.rows = 0;
         self.cols = 0;
