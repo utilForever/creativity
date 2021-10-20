@@ -77,7 +77,7 @@ macro_rules! grid {
                 length = vec.len();
 
                 if length % cols != 0 {
-                    panic!("All rows must be the same length");
+                    panic!("All row size must be the same");
                 }
             )*
 
@@ -154,10 +154,10 @@ impl<T: Clone> Grid<T> {
     where
         T: Default,
     {
-        // check grid size and vector size.
         // if vector size is greater than grid size, panic occurs.
+        // vector size is not greater than grid size.
         if rows * cols < vec.len() {
-            panic!("Vector length is longer than rows * cols");
+            panic!("Vector length must be not greater than rows * cols");
         }
 
         // if vector size is less than grid size, fill in the diff with default value.
@@ -187,21 +187,23 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[3, 4], [1, 2]]);
     /// ```
     pub fn insert_row(&mut self, index: usize, insert_vec: Vec<T>) {
-        // check agument vector size and column size.
-        // if column size is not equal argument vector size, panic occurs.
-        // to insert, column size and vector size must be same.
+        // if vector size is not equal grid column size, panic occurs.
+        // to insert, vector size and grid column size must be same.
         if self.cols != insert_vec.len() {
-            panic!("cols != insert vector length");
+            panic!(
+                "Not equal length - vector length({}) and grid column size({}) must be same.",
+                insert_vec.len(),
+                self.cols
+            );
         }
 
-        // check the row to insert(index) and grid row size.
-        // if row size is less than index, panic occurs.
+        // if index is greater than grid row size, panic occurs.
         // to insert, index is not greater than grid row size.
         if index > self.rows {
-            panic!("out of bound");
+            panic!("Out Of Bound - row size: {}.", index);
         }
 
-        // calculate real start index to insert.
+        // calculate starting index to insert values.
         let start_idx = index * self.cols;
 
         // insert.
@@ -209,7 +211,7 @@ impl<T: Clone> Grid<T> {
             self.data.insert(start_idx + i, insert_vec[i].clone());
         }
 
-        // increasing grid row size.
+        // resize.
         self.rows += 1;
     }
 
@@ -226,27 +228,29 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 3], [2, 4]]);
     /// ```
     pub fn insert_col(&mut self, index: usize, insert_vec: Vec<T>) {
-        // check agument vector size and row size.
-        // if row size is not equal argument vector size, panic occurs.
-        // to insert, row size and vector size must be same.
+        // if vector size is not equal grid row size, panic occurs.
+        // to insert, vector size and grid row size must be same.
         if self.rows != insert_vec.len() {
-            panic!("rows != insert vector length");
+            panic!(
+                "Not equal length - vector size({}) and grid row size({}) must be same.",
+                insert_vec.len(),
+                self.rows
+            );
         }
 
-        // check the column to insert(index) and grid column size.
-        // if column size is less than index, panic occurs.
+        // if index is greater than grid column size, panic occurs.
         // to insert, index is not greater than grid column size.
         if index > self.cols {
-            panic!("out of bound");
+            panic!("Out Of Index - column index: {}", index);
         }
 
         for i in 0..self.rows {
-            // calculate real index in insert.
+            // calculate real index to insert.
             let data_idx = i * self.cols + index + i;
             self.data.insert(data_idx, insert_vec[i].clone());
         }
 
-        // increasing grid column size
+        // resize.
         self.cols += 1;
     }
 
@@ -263,20 +267,26 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 2], [5, 6]]);
     /// ```
     pub fn remove_row(&mut self, index: usize) {
+        // if grid data is empty, panic occurs.
+        // to remove, grid data is not empty.
         if self.data.is_empty() {
-            panic!("data is empty");
+            panic!("Grid data is empty.");
         }
 
-        if index > self.rows {
-            panic!("out of bound");
+        // if index is greater than grid row size, panic ocuurs.
+        // to remove, index is not greater than grid row size.
+        if index >= self.rows {
+            panic!("Out Of Index - row index: {}", index);
         }
 
+        // calculate starting index to remove value.
         let remove_idx = index * self.cols;
 
         for _ in 0..self.cols {
             self.data.remove(remove_idx);
         }
 
+        // resize.
         self.rows -= 1;
     }
 
@@ -293,21 +303,32 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 3], [4, 6]]);
     /// ```
     pub fn remove_col(&mut self, index: usize) {
+        // if grid data is empty, panic occurs.
+        // to remove, grid data is not empty.
         if self.data.is_empty() {
-            panic!("data is empty");
+            panic!("Grid data is empty.");
         }
 
-        if index > self.cols {
-            panic!("out of bound");
+        // if index is greater than grid column size, panic ocuurs.
+        // to remove, index is not greater than grid column size.
+        if index >= self.cols {
+            panic!("Out of Index - column index: {}", index);
         }
 
         for i in 0..self.rows {
+            // calculate real index to remove value.
             let data_idx = i * self.cols + index - i;
             self.data.remove(data_idx);
         }
 
+        // resize.
         self.cols -= 1;
     }
+
+    // Functions: push_row, push_col functions.
+    // Improvement:
+    //  We can use extend_from_slice function in std::vec.
+    //  User can use the push function with slice.
 
     /// Insert new values in the last row.
     ///
@@ -322,14 +343,23 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 2], [3, 4]]);
     /// ```
     pub fn push_row(&mut self, push_vec: Vec<T>) {
+        // if vector size is not equal grid column size, panic occurs.
+        // to push, vector size and grid column size must be same.
         if self.cols != push_vec.len() {
-            panic!("cols != push vector length");
+            panic!(
+                "Not equal length - vector length({}) and grid column size({}) must be same.",
+                push_vec.len(),
+                self.cols
+            );
         }
 
+        // push function insert value in the last row.
+        // therefore, just need to push new values in grid data.
         for i in 0..self.cols {
             self.data.push(push_vec[i].clone());
         }
 
+        // resize.
         self.rows += 1;
     }
 
@@ -346,10 +376,17 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 3], [2, 4]]);
     /// ```
     pub fn push_col(&mut self, push_vec: Vec<T>) {
+        // if vector size is not equal grid row size, panic occurs.
+        // to push, vector size and grid row size must be same.
         if self.rows != push_vec.len() {
-            panic!("rows != push vector length");
+            panic!(
+                "Not equal length - vector length({}) and grid row size({}) must be same.",
+                push_vec.len(),
+                self.rows
+            );
         }
 
+        // the behavior of the function is similar to insert_col function.
         let index = self.cols;
 
         for i in 0..self.rows {
@@ -357,6 +394,7 @@ impl<T: Clone> Grid<T> {
             self.data.insert(data_idx, push_vec[i].clone());
         }
 
+        // resize.
         self.cols += 1;
     }
 
@@ -373,14 +411,19 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 2]]);
     /// ```
     pub fn pop_row(&mut self) {
+        // if grid data is empty, panic occurs.
+        // to pop, grid data is not empty.
         if self.data.is_empty() {
-            panic!("data is empty");
+            panic!("Grid data is empty.");
         }
 
+        // pop function remove values in the last row.
+        // so, just need to pop.
         for _ in 0..self.cols {
             self.data.pop();
         }
 
+        // resize.
         self.rows -= 1;
     }
 
@@ -397,10 +440,13 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid, grid![[1, 2], [4, 5]]);
     /// ```
     pub fn pop_col(&mut self) {
+        // if grid data is empty, panic occurs.
+        // to pop, grid data is not empty.
         if self.data.is_empty() {
-            panic!("data is empty");
+            panic!("Grid data is empty.");
         }
 
+        // The behavior of the function is similar to the remove_col function.
         let index = self.cols - 1;
 
         for i in 0..self.rows {
@@ -408,6 +454,7 @@ impl<T: Clone> Grid<T> {
             self.data.remove(data_idx);
         }
 
+        // resize.
         self.cols -= 1;
     }
 
@@ -444,10 +491,12 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     pub fn iter_row(&self, row: usize) -> Iter<T> {
-        if row > self.rows {
-            panic!("out of bound");
+        // if specific row is greater than grid row size, panic occurs.
+        if row >= self.rows {
+            panic!("Out Of Index - row index: {}", row);
         }
 
+        // return grid data in specific row to iter.
         let start = row * self.cols;
         self.data[start..(start + self.cols)].iter()
     }
@@ -466,10 +515,12 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     pub fn iter_col(&self, col: usize) -> StepBy<Iter<T>> {
-        if col > self.cols {
-            panic!("out of bound");
+        // if specific col is greater than grid column size, panic occurs.
+        if col >= self.cols {
+            panic!("Out of Index - column index: {}", col);
         }
 
+        // return grid data in specific column to iter.
         self.data[col..].iter().step_by(self.cols)
     }
 
@@ -489,28 +540,35 @@ impl<T: Clone> Grid<T> {
         self.data.reverse();
     }
 
+    // TO-DO
     pub fn reverse_row(&mut self, row: usize) {
-        if row > self.rows {
-            panic!("out of bound");
+        // if speific row is greater than grid row size, panic occurs.
+        if row >= self.rows {
+            panic!("Out of Index - row index: {}", row);
         }
 
+        // get grid data in specific row to reverse.
         let start_idx = row * self.cols;
         let mut reverse_row: Vec<T> = self.data[start_idx..start_idx + self.cols].to_vec();
 
         reverse_row.reverse();
 
+        // insert reversed row data.
         self.remove_row(row);
         self.insert_row(row, reverse_row);
     }
 
+    // TO-DO
     pub fn reverse_col(&mut self, col: usize)
     where
         T: Default,
     {
-        if col > self.cols {
-            panic!("out of bound");
+        // if specific column is greater than grid column size, panic occurs.
+        if col >= self.cols {
+            panic!("Out Of Index - column index: {}", col);
         }
 
+        // get grid data in specific column to reverse.
         let mut reverse_col: Vec<T> = Vec::with_capacity(self.rows);
 
         for i in 0..self.rows {
@@ -519,6 +577,7 @@ impl<T: Clone> Grid<T> {
 
         reverse_col.reverse();
 
+        // insert reversed column data.
         self.remove_col(col);
         self.insert_col(col, reverse_col);
     }
@@ -577,7 +636,8 @@ impl<T: Clone> Grid<T> {
     /// Randomly shuffle the grid data.
     ///
     /// Example:
-    /// ```
+    /// ```ignore
+    /// // may fail.
     /// use creativity::*;
     ///
     /// let mut grid: core::grid::Grid<u32> = grid![[1, 2], [3, 4]];
@@ -606,12 +666,14 @@ impl<T: Clone> Grid<T> {
     pub fn transpose(&mut self) {
         let mut vec = Vec::with_capacity(self.data.len());
 
+        // transpose code
         for i in 0..self.cols {
             for j in 0..self.rows {
                 vec.push(self.data[j * self.cols + i].clone());
             }
         }
 
+        // change from origin data to transpose data.
         self.data = vec.clone();
         swap(&mut self.rows, &mut self.cols);
     }
@@ -650,6 +712,7 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(rows, 2);
     /// ```
     pub fn get_rows(&self) -> usize {
+        // return grid row size.
         self.rows
     }
 
@@ -665,6 +728,7 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(cols, 3);
     /// ```
     pub fn get_cols(&self) -> usize {
+        // return grid column size.
         self.cols
     }
 
@@ -681,6 +745,7 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(size.1, 3);  // cols
     /// ```
     pub fn get_size(&self) -> (usize, usize) {
+        // return grid row size, grid column size.
         (self.rows, self.cols)
     }
 
